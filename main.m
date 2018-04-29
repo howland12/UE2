@@ -5,8 +5,8 @@ close all;
 % ------------------------------------------------------------------------- 
 % script control variables
 % ------------------------------------------------------------------------- 
-run_generator = true;
-run_correlation = false;
+run_generator =  false;
+run_correlation = true;
 
 if run_generator == true
     
@@ -104,5 +104,11 @@ if run_generator == true
     
 end
 
+if run_correlation
+    load('rnd_numbers.mat');
+    len = length(desired_rand_numbers(1,:));
+    x = auto_correlation(desired_rand_numbers(1,:), len/2);
+    loglog(abs(x));
+end
 
 
