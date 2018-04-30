@@ -5,9 +5,9 @@ close all;
 % ------------------------------------------------------------------------- 
 % script control variables
 % ------------------------------------------------------------------------- 
-run_generator =  false;
+run_generator =  true;
 run_correlation = true;
-load_data = true;
+load_data = false;
 
 if run_generator == true
     
@@ -17,7 +17,7 @@ if run_generator == true
     chi = [0 2 6];
     nof_rnd_n = 1e6;
     seed_vector = [0, 0, 0];
-    delta_x_vector = [6, 12, 75];
+    delta_x_vector = [6, 12, 17];
     fig_handle_vector = zeros([9 1]);
 
 
@@ -107,7 +107,7 @@ end
 
 if run_correlation
     
-    load('rnd_numbers_1e7_17.mat');
+    load('rnd_numbers.mat');
     
     
     % ---------------------------------------------------------------------
@@ -152,17 +152,28 @@ if run_correlation
 
     % Fit model to data.
     [squared_fitresult, gof] = fit( xData, yData, ft, opts );
+
+    % Set up fittype and options.
+    ft = fittype( 'c*x*(x-1)', 'independent', 'x', 'dependent', 'y' );
+    opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
+    opts.Display = 'Off';
+    opts.StartPoint = 0.529408632504559;
+
+    % Fit model to data.
+    [n_times_tmax_fitresult, gof] = fit( xData, yData, ft, opts );
+    
       
     % Plot fit with data.
     figure(7);
     h = plot( squared_fitresult, xData, yData );
     hold on;
     plot( log_fitresult,'c', xData, yData );
+    plot( n_times_tmax_fitresult,'k', xData, yData );
     hold off;
     set(gca, 'YScale', 'log')
     set(gca, 'XScale', 'log')
     
-    legend('data','c * x * log(x)','','c * x^2');
+    legend('data','c * x^2','','c * x * log(x)','','c*x*(x-1)');
     xlabel('number of rnd numbers used / 1');
     ylabel('time needed to calculate autocorrelation / 1');
     title('time vs rnd numbers used in autocorrelation');
