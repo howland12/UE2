@@ -7,6 +7,7 @@ close all;
 % ------------------------------------------------------------------------- 
 run_generator =  false;
 run_correlation = true;
+load_data = true;
 
 if run_generator == true
     
@@ -17,7 +18,7 @@ if run_generator == true
     nof_rnd_n = 1e7;
     seed_vector = [0, 0, 0];
     delta_x_vector = [6, 12, 17];
-    fig_handle_vector = zeros([6 1]);
+    fig_handle_vector = zeros([9 1]);
 
 
     % ---------------------------------------------------------------------
@@ -105,10 +106,76 @@ if run_generator == true
 end
 
 if run_correlation
+    
     load('rnd_numbers.mat');
-    len = length(desired_rand_numbers(1,:));
-    x = auto_correlation(desired_rand_numbers(1,:), len/2);
-    loglog(abs(x));
+    
+    
+    % ---------------------------------------------------------------------
+    % measure time needed to calculate auto correlation
+    % ---------------------------------------------------------------------
+    if ~load_data
+        length_saved_data = length(desired_rand_numbers(1,:));
+        n_autocorrelation = round(logspace(1,log10(length_saved_data),1000)); %vector containing the number of rnd numbers to test auto correlation speed
+        nof_n = length(n_autocorrelation);
+
+        calculation_time = zeros([nof_n, 1]); % needed time
+        for i = 1 : nof_n
+            tic;
+            data = desired_rand_numbers(1,1:n_autocorrelation(i));
+            auto_correlation(data, n_autocorrelation-1);
+            calculation_time(i) = toc;
+            if mod(i,100) == 0
+                fprintf('%i\n',i);
+            end
+        end
+        save('autocorrelation.mat','n_autocorrelation','calculation_time');  
+    else
+        load('autocorrelation1e7.mat');
+    end
+    [xData, yData] = prepareCurveData( n_autocorrelation, calculation_time );
+
+    % Set up fittype and options.
+    ft = fittype( 'c * x * log(x)', 'independent', 'x', 'dependent', 'y' );
+    opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
+    opts.Display = 'Off';
+    opts.StartPoint = 0.455986767390341;
+
+    % Fit model to data.
+    [log_fitresult, gof] = fit( xData, yData, ft, opts );
+    
+    
+    % Set up fittype and options.
+    ft = fittype( 'c * x^2', 'independent', 'x', 'dependent', 'y' );
+    opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
+    opts.Display = 'Off';
+    opts.StartPoint = 0.455986767390341;
+
+    % Fit model to data.
+    [squared_fitresult, gof] = fit( xData, yData, ft, opts );
+      
+    % Plot fit with data.
+    figure( 'Name', 'untitled fit 1' );
+    h = plot( squared_fitresult, xData, yData );
+    hold on;
+    plot( log_fitresult,'c', xData, yData );
+    hold off;
+    set(gca, 'YScale', 'log')
+    set(gca, 'XScale', 'log')
+    
+    legend('data','c * x * log(x)','','c * x^2');
+    xlabel('number of rnd numbers used / 1');
+    ylabel('time needed to calculate autocorrelation / 1');
+    title('time vs rnd numbers used in autocorrelation');
+    
+    % ---------------------------------------------------------------------
+    % fit for autocorrelation coefficient.
+    % ---------------------------------------------------------------------
+    nof_distributions = size(desired_rand_numbers);
+    for i = 1 : nof_distributions(1)
+        data = desired_rand_numbers(i,:);
+        auto_correlation_values(i,:) = auto_correlation(data, length(data)-1);
+    end
+    
 end
 
 
