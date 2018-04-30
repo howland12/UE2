@@ -5,7 +5,7 @@ close all;
 % ------------------------------------------------------------------------- 
 % script control variables
 % ------------------------------------------------------------------------- 
-run_generator =  true;
+run_generator =  false;
 run_correlation = true;
 load_data = true;
 
@@ -15,9 +15,9 @@ if run_generator == true
     % Global variables used for more than one task of the exercise
     % --------------------------------------------------------------------- 
     chi = [0 2 6];
-    nof_rnd_n = 1e4;
+    nof_rnd_n = 1e6;
     seed_vector = [0, 0, 0];
-    delta_x_vector = [6, 12, 17];
+    delta_x_vector = [6, 12, 75];
     fig_handle_vector = zeros([9 1]);
 
 
@@ -107,7 +107,7 @@ end
 
 if run_correlation
     
-    load('rnd_numbers_1e7.mat');
+    load('rnd_numbers_1e7_17.mat');
     
     
     % ---------------------------------------------------------------------
@@ -177,33 +177,34 @@ if run_correlation
     end
     
     for i = 1 : nof_distributions(1)
-%         figure();
-%         plot(auto_correlation_values(i,:));
-%         xlim([0,10]);
-%         xlabel('t / 1')
-%         ylabel('autocorrelation value / 1')
-%         title_string = ['autocorrelation distribution ', ...
-%                         num2str(i)];
-%         title(title_string);
-        
-        x = 1:10;
-        x = x';
-        y = auto_correlation_values(i,1:10)';
+        if i ~= 3
+            x = 0:9;
+            x = x';
+            y = auto_correlation_values(i,1:10)';
+        else
+            x = 0:99;
+            x = x';
+            y = auto_correlation_values(i,1:100)';
+        end
         f = fit(x,y,'exp1');
         coeff = coeffvalues(f);
-        
-        x_plot = logspace(0,7,1000);
+        x_plot = logspace(-3,7,1000);
         y_plot = coeff(1) .* exp(coeff(2) .* x_plot);
         
         figure();
-        plot(auto_correlation_values(i,:));
+        plot(0:length(auto_correlation_values(i,:))-1,auto_correlation_values(i,:));
         hold on;
         plot(x_plot,y_plot);
         hold off;
         set(gca, 'YScale', 'log')
-        set(gca, 'XScale', 'log')
-        xlim([0,8e6]);
-        ylim([1e-7,1])
+%         set(gca, 'XScale', 'log')
+        legend('data','a * exp(b*x)');
+         if i ~= 3
+            xlim([0,8e1]);
+         else
+            xlim([0,2e3]);
+         end
+%         ylim([1e-7,1])
         xlabel('t / 1')
         ylabel('autocorrelation value / 1')
         title_string = ['autocorrelation distribution ', ...
