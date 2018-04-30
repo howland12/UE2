@@ -5,7 +5,7 @@ close all;
 % ------------------------------------------------------------------------- 
 % script control variables
 % ------------------------------------------------------------------------- 
-run_generator =  false;
+run_generator =  true;
 run_correlation = true;
 load_data = true;
 
@@ -15,7 +15,7 @@ if run_generator == true
     % Global variables used for more than one task of the exercise
     % --------------------------------------------------------------------- 
     chi = [0 2 6];
-    nof_rnd_n = 1e7;
+    nof_rnd_n = 1e4;
     seed_vector = [0, 0, 0];
     delta_x_vector = [6, 12, 17];
     fig_handle_vector = zeros([9 1]);
@@ -107,7 +107,7 @@ end
 
 if run_correlation
     
-    load('rnd_numbers.mat');
+    load('rnd_numbers_1e7.mat');
     
     
     % ---------------------------------------------------------------------
@@ -130,7 +130,7 @@ if run_correlation
         end
         save('autocorrelation.mat','n_autocorrelation','calculation_time');  
     else
-        load('autocorrelation1e7.mat');
+        load('autocorrelation1e7_17.mat');
     end
     [xData, yData] = prepareCurveData( n_autocorrelation, calculation_time );
 
@@ -154,7 +154,7 @@ if run_correlation
     [squared_fitresult, gof] = fit( xData, yData, ft, opts );
       
     % Plot fit with data.
-    figure( 'Name', 'untitled fit 1' );
+    figure(7);
     h = plot( squared_fitresult, xData, yData );
     hold on;
     plot( log_fitresult,'c', xData, yData );
@@ -173,9 +173,45 @@ if run_correlation
     nof_distributions = size(desired_rand_numbers);
     for i = 1 : nof_distributions(1)
         data = desired_rand_numbers(i,:);
-        auto_correlation_values(i,:) = auto_correlation(data, length(data)-1);
+        auto_correlation_values(i,:) = abs(auto_correlation(data, length(data)-1));
     end
     
+    for i = 1 : nof_distributions(1)
+%         figure();
+%         plot(auto_correlation_values(i,:));
+%         xlim([0,10]);
+%         xlabel('t / 1')
+%         ylabel('autocorrelation value / 1')
+%         title_string = ['autocorrelation distribution ', ...
+%                         num2str(i)];
+%         title(title_string);
+        
+        x = 1:10;
+        x = x';
+        y = auto_correlation_values(i,1:10)';
+        f = fit(x,y,'exp1');
+        coeff = coeffvalues(f);
+        
+        x_plot = logspace(0,7,1000);
+        y_plot = coeff(1) .* exp(coeff(2) .* x_plot);
+        
+        figure();
+        plot(auto_correlation_values(i,:));
+        hold on;
+        plot(x_plot,y_plot);
+        hold off;
+        set(gca, 'YScale', 'log')
+        set(gca, 'XScale', 'log')
+        xlim([0,8e6]);
+        ylim([1e-7,1])
+        xlabel('t / 1')
+        ylabel('autocorrelation value / 1')
+        title_string = ['autocorrelation distribution ', ...
+                        num2str(i)];
+        title(title_string); 
+        
+        fprintf('asymptotic autocorrelation time of distribution %i is %f s\n', i, -1/coeff(2));
+    end   
 end
 
 
